@@ -30,7 +30,7 @@ required this.isLoggedIn,
 Widget build(BuildContext context) {
 return MaterialApp(
 debugShowCheckedModeBanner: false,
-title: 'My Cafe1',
+title: 'My Cafe2',
 
 home: isLoggedIn
 ? const HomeScreen()
