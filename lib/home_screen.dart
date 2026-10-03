@@ -16,6 +16,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Track quantities for each item
   final Map<String, int> quantities = {};
+  // Track selection status for each item
+  final Map<String, bool> selectedItems = {};
 
   // ================= MEALS =================
 
@@ -153,8 +155,11 @@ class _HomeScreenState extends State<HomeScreen> {
     int total = 0;
     for (var item in [...meals, ...combos]) {
       String name = item["name"];
-      int qty = quantities[name] ?? 0;
-      total += (item["price"] as int) * qty;
+      bool isSelected = selectedItems[name] ?? false;
+      if (isSelected) {
+        int qty = quantities[name] ?? 1;
+        total += (item["price"] as int) * qty;
+      }
     }
     return total;
   }
@@ -198,7 +203,8 @@ class _HomeScreenState extends State<HomeScreen> {
     String name = item["name"];
     int price = item["price"];
     String image = item["image"];
-    int qty = quantities[name] ?? 0;
+    int qty = quantities[name] ?? 1;
+    bool isSelected = selectedItems[name] ?? false;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
@@ -210,24 +216,34 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(8),
         child: Row(
           children: [
+            // CHECKBOX
+            Checkbox(
+              value: isSelected,
+              activeColor: Colors.brown,
+              onChanged: (value) {
+                setState(() {
+                  selectedItems[name] = value ?? false;
+                  if (value == true && (quantities[name] ?? 0) == 0) {
+                    quantities[name] = 1;
+                  }
+                });
+              },
+            ),
+
             // IMAGE
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
                 image,
-                width: 80,
-                height: 80,
+                width: 70,
+                height: 70,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
-                    width: 80,
-                    height: 80,
+                    width: 70,
+                    height: 70,
                     color: Colors.brown.shade100,
-                    child: const Icon(
-                      Icons.fastfood,
-                      size: 40,
-                      color: Colors.brown,
-                    ),
+                    child: const Icon(Icons.fastfood, color: Colors.brown),
                   );
                 },
               ),
@@ -242,15 +258,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     name,
                     style: const TextStyle(
-                      fontSize: 17,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     "₹$price",
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: Colors.brown,
                     ),
@@ -259,38 +275,39 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // QUANTITY CONTROLS
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    if (qty > 0) {
-                      setState(() {
-                        quantities[name] = qty - 1;
-                      });
-                    }
-                  },
-                  icon: const Icon(Icons.remove_circle_outline),
-                  color: Colors.brown,
-                ),
-                Text(
-                  "$qty",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+            // QUANTITY CONTROLS (Only show if selected)
+            if (isSelected)
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      if (qty > 1) {
+                        setState(() {
+                          quantities[name] = qty - 1;
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.remove_circle_outline, size: 20),
+                    color: Colors.brown,
                   ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      quantities[name] = qty + 1;
-                    });
-                  },
-                  icon: const Icon(Icons.add_circle_outline),
-                  color: Colors.brown,
-                ),
-              ],
-            ),
+                  Text(
+                    "$qty",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        quantities[name] = qty + 1;
+                      });
+                    },
+                    icon: const Icon(Icons.add_circle_outline, size: 20),
+                    color: Colors.brown,
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -345,20 +362,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     SizedBox(height: 5),
                     Text(
-                      "Choose your favourite food",
+                      "Select items and set quantity",
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   ],
                 ),
               ),
 
-              // MEALS TITLE
+              // MEALS
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 15),
                 child: Text(
                   "🍔 Meals",
                   style: TextStyle(
-                    fontSize: 23,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.brown,
                   ),
@@ -369,13 +386,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 20),
 
-              // COMBO TITLE
+              // COMBOS
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 15),
                 child: Text(
                   "🔥 Combos",
                   style: TextStyle(
-                    fontSize: 23,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.brown,
                   ),
@@ -392,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 10,
               ),
             ],
@@ -406,12 +423,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const Text(
                       "Total Amount",
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                      style: TextStyle(fontSize: 13, color: Colors.grey),
                     ),
                     Text(
                       "₹$totalPrice",
                       style: const TextStyle(
-                        fontSize: 25,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.brown,
                       ),
@@ -419,36 +436,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-
-              // ORDER BUTTON
               ElevatedButton(
                 onPressed: () {
                   if (totalPrice == 0) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Please select at least one product"),
-                      ),
+                      const SnackBar(content: Text("Please select at least one item")),
                     );
                   } else {
-                    // Collect selected items
-                    List<Map<String, dynamic>> selectedItems = [];
+                    List<Map<String, dynamic>> finalItems = [];
                     for (var item in [...meals, ...combos]) {
                       String name = item["name"];
-                      if ((quantities[name] ?? 0) > 0) {
-                        selectedItems.add({
+                      if (selectedItems[name] == true) {
+                        finalItems.add({
                           "name": name,
                           "price": item["price"],
-                          "quantity": quantities[name],
+                          "quantity": quantities[name] ?? 1,
                         });
                       }
                     }
 
-                    // Navigate to BillScreen
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => BillScreen(
-                          selectedItems: selectedItems,
+                          selectedItems: finalItems,
                           totalAmount: totalPrice,
                         ),
                       ),
@@ -458,11 +469,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.brown,
                   foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Text(
                   "ORDER",
